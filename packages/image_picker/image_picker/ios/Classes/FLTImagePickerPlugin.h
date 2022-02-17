@@ -3,11 +3,11 @@
 // found in the LICENSE file.
 
 #import <Flutter/Flutter.h>
+#import <PhotosUI/PhotosUI.h>
 
 @interface FLTImagePickerPlugin : NSObject <FlutterPlugin>
 
 // For testing only.
-- (UIImagePickerController *)getImagePickerController;
 - (UIViewController *)viewControllerWithWindow:(UIWindow *)window;
 
 @end

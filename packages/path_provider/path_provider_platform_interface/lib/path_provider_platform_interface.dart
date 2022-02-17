@@ -2,12 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'dart:async';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'src/enums.dart';
 import 'src/method_channel_path_provider.dart';
-
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 export 'src/enums.dart';
 
@@ -34,7 +32,7 @@ abstract class PathProviderPlatform extends PlatformInterface {
   /// Platform-specific plugins should set this with their own platform-specific
   /// class that extends [PathProviderPlatform] when they register themselves.
   static set instance(PathProviderPlatform instance) {
-    PlatformInterface.verifyToken(instance, _token);
+    PlatformInterface.verify(instance, _token);
     _instance = instance;
   }
 

@@ -2,9 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// TODO(mvanbeusekom): Remove this once flutter_driver supports null safety.
-// https://github.com/flutter/flutter/issues/71379
-// @dart = 2.9
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
@@ -12,12 +9,12 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
-import 'package:integration_test/integration_test.dart';
 
 void main() {
-  Directory testDir;
+  late Directory testDir;
 
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -57,12 +54,12 @@ void main() {
   // whether the image is exactly the desired resolution.
   Future<bool> testCaptureImageResolution(
       CameraController controller, ResolutionPreset preset) async {
-    final Size expectedSize = presetExpectedSizes[preset];
+    final Size expectedSize = presetExpectedSizes[preset]!;
     print(
         'Capturing photo at $preset (${expectedSize.width}x${expectedSize.height}) using camera ${controller.description.name}');
 
     // Take Picture
-    final file = await controller.takePicture();
+    final XFile file = await controller.takePicture();
 
     // Load picture
     final File fileImage = File(file.path);
@@ -74,42 +71,46 @@ void main() {
         expectedSize, Size(image.height.toDouble(), image.width.toDouble()));
   }
 
-  testWidgets('Capture specific image resolutions',
-      (WidgetTester tester) async {
-    final List<CameraDescription> cameras = await availableCameras();
-    if (cameras.isEmpty) {
-      return;
-    }
-    for (CameraDescription cameraDescription in cameras) {
-      bool previousPresetExactlySupported = true;
-      for (MapEntry<ResolutionPreset, Size> preset
-          in presetExpectedSizes.entries) {
-        final CameraController controller =
-            CameraController(cameraDescription, preset.key);
-        await controller.initialize();
-        final bool presetExactlySupported =
-            await testCaptureImageResolution(controller, preset.key);
-        assert(!(!previousPresetExactlySupported && presetExactlySupported),
-            'The camera took higher resolution pictures at a lower resolution.');
-        previousPresetExactlySupported = presetExactlySupported;
-        await controller.dispose();
+  testWidgets(
+    'Capture specific image resolutions',
+    (WidgetTester tester) async {
+      final List<CameraDescription> cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        return;
       }
-    }
-  }, skip: !Platform.isAndroid);
+      for (final CameraDescription cameraDescription in cameras) {
+        bool previousPresetExactlySupported = true;
+        for (final MapEntry<ResolutionPreset, Size> preset
+            in presetExpectedSizes.entries) {
+          final CameraController controller =
+              CameraController(cameraDescription, preset.key);
+          await controller.initialize();
+          final bool presetExactlySupported =
+              await testCaptureImageResolution(controller, preset.key);
+          assert(!(!previousPresetExactlySupported && presetExactlySupported),
+              'The camera took higher resolution pictures at a lower resolution.');
+          previousPresetExactlySupported = presetExactlySupported;
+          await controller.dispose();
+        }
+      }
+    },
+    // TODO(egarciad): Fix https://github.com/flutter/flutter/issues/93686.
+    skip: true,
+  );
 
   // This tests that the capture is no bigger than the preset, since we have
   // automatic code to fall back to smaller sizes when we need to. Returns
   // whether the image is exactly the desired resolution.
   Future<bool> testCaptureVideoResolution(
       CameraController controller, ResolutionPreset preset) async {
-    final Size expectedSize = presetExpectedSizes[preset];
+    final Size expectedSize = presetExpectedSizes[preset]!;
     print(
         'Capturing video at $preset (${expectedSize.width}x${expectedSize.height}) using camera ${controller.description.name}');
 
     // Take Video
     await controller.startVideoRecording();
     sleep(const Duration(milliseconds: 300));
-    final file = await controller.stopVideoRecording();
+    final XFile file = await controller.stopVideoRecording();
 
     // Load video metadata
     final File videoFile = File(file.path);
@@ -124,29 +125,33 @@ void main() {
         expectedSize, Size(video.height, video.width));
   }
 
-  testWidgets('Capture specific video resolutions',
-      (WidgetTester tester) async {
-    final List<CameraDescription> cameras = await availableCameras();
-    if (cameras.isEmpty) {
-      return;
-    }
-    for (CameraDescription cameraDescription in cameras) {
-      bool previousPresetExactlySupported = true;
-      for (MapEntry<ResolutionPreset, Size> preset
-          in presetExpectedSizes.entries) {
-        final CameraController controller =
-            CameraController(cameraDescription, preset.key);
-        await controller.initialize();
-        await controller.prepareForVideoRecording();
-        final bool presetExactlySupported =
-            await testCaptureVideoResolution(controller, preset.key);
-        assert(!(!previousPresetExactlySupported && presetExactlySupported),
-            'The camera took higher resolution pictures at a lower resolution.');
-        previousPresetExactlySupported = presetExactlySupported;
-        await controller.dispose();
+  testWidgets(
+    'Capture specific video resolutions',
+    (WidgetTester tester) async {
+      final List<CameraDescription> cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        return;
       }
-    }
-  }, skip: !Platform.isAndroid);
+      for (final CameraDescription cameraDescription in cameras) {
+        bool previousPresetExactlySupported = true;
+        for (final MapEntry<ResolutionPreset, Size> preset
+            in presetExpectedSizes.entries) {
+          final CameraController controller =
+              CameraController(cameraDescription, preset.key);
+          await controller.initialize();
+          await controller.prepareForVideoRecording();
+          final bool presetExactlySupported =
+              await testCaptureVideoResolution(controller, preset.key);
+          assert(!(!previousPresetExactlySupported && presetExactlySupported),
+              'The camera took higher resolution pictures at a lower resolution.');
+          previousPresetExactlySupported = presetExactlySupported;
+          await controller.dispose();
+        }
+      }
+    },
+    // TODO(egarciad): Fix https://github.com/flutter/flutter/issues/93686.
+    skip: true,
+  );
 
   testWidgets('Pause and resume video recording', (WidgetTester tester) async {
     final List<CameraDescription> cameras = await availableCameras();
@@ -186,7 +191,7 @@ void main() {
 
     sleep(const Duration(milliseconds: 500));
 
-    final file = await controller.stopVideoRecording();
+    final XFile file = await controller.stopVideoRecording();
     final int recordingTime =
         DateTime.now().millisecondsSinceEpoch - recordingStart;
 
@@ -219,7 +224,9 @@ void main() {
       bool _isDetecting = false;
 
       await controller.startImageStream((CameraImage image) {
-        if (_isDetecting) return;
+        if (_isDetecting) {
+          return;
+        }
 
         _isDetecting = true;
 
@@ -234,5 +241,57 @@ void main() {
       await controller.dispose();
     },
     skip: !Platform.isAndroid,
+  );
+
+  /// Start streaming with specifying the ImageFormatGroup.
+  Future<CameraImage> startStreaming(List<CameraDescription> cameras,
+      ImageFormatGroup? imageFormatGroup) async {
+    final CameraController controller = CameraController(
+      cameras.first,
+      ResolutionPreset.low,
+      enableAudio: false,
+      imageFormatGroup: imageFormatGroup,
+    );
+
+    await controller.initialize();
+    final Completer<CameraImage> _completer = Completer<CameraImage>();
+
+    await controller.startImageStream((CameraImage image) {
+      if (!_completer.isCompleted) {
+        Future<void>(() async {
+          await controller.stopImageStream();
+          await controller.dispose();
+        }).then((Object? value) {
+          _completer.complete(image);
+        });
+      }
+    });
+    return _completer.future;
+  }
+
+  testWidgets(
+    'iOS image streaming with imageFormatGroup',
+    (WidgetTester tester) async {
+      final List<CameraDescription> cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        return;
+      }
+
+      CameraImage _image = await startStreaming(cameras, null);
+      expect(_image, isNotNull);
+      expect(_image.format.group, ImageFormatGroup.bgra8888);
+      expect(_image.planes.length, 1);
+
+      _image = await startStreaming(cameras, ImageFormatGroup.yuv420);
+      expect(_image, isNotNull);
+      expect(_image.format.group, ImageFormatGroup.yuv420);
+      expect(_image.planes.length, 2);
+
+      _image = await startStreaming(cameras, ImageFormatGroup.bgra8888);
+      expect(_image, isNotNull);
+      expect(_image.format.group, ImageFormatGroup.bgra8888);
+      expect(_image.planes.length, 1);
+    },
+    skip: !Platform.isIOS,
   );
 }

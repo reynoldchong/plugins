@@ -30,12 +30,13 @@
 
 + (UIImage *)scaledImage:(UIImage *)image
                 maxWidth:(NSNumber *)maxWidth
-               maxHeight:(NSNumber *)maxHeight {
+               maxHeight:(NSNumber *)maxHeight
+     isMetadataAvailable:(BOOL)isMetadataAvailable {
   double originalWidth = image.size.width;
   double originalHeight = image.size.height;
 
-  bool hasMaxWidth = maxWidth != (id)[NSNull null];
-  bool hasMaxHeight = maxHeight != (id)[NSNull null];
+  bool hasMaxWidth = maxWidth != nil;
+  bool hasMaxHeight = maxHeight != nil;
 
   double width = hasMaxWidth ? MIN([maxWidth doubleValue], originalWidth) : originalWidth;
   double height = hasMaxHeight ? MIN([maxHeight doubleValue], originalHeight) : originalHeight;
@@ -67,6 +68,19 @@
         height = downscaledHeight;
       }
     }
+  }
+
+  if (!isMetadataAvailable) {
+    UIImage *imageToScale = [UIImage imageWithCGImage:image.CGImage
+                                                scale:1
+                                          orientation:image.imageOrientation];
+
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(width, height), NO, 1.0);
+    [imageToScale drawInRect:CGRectMake(0, 0, width, height)];
+
+    UIImage *scaledImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return scaledImage;
   }
 
   // Scaling the image always rotate itself based on the current imageOrientation of the original
@@ -130,7 +144,7 @@
     }
 
     UIImage *image = [UIImage imageWithCGImage:imageRef scale:1.0 orientation:UIImageOrientationUp];
-    image = [self scaledImage:image maxWidth:maxWidth maxHeight:maxHeight];
+    image = [self scaledImage:image maxWidth:maxWidth maxHeight:maxHeight isMetadataAvailable:YES];
 
     [images addObject:image];
 

@@ -2,9 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// TODO(mvanbeusekom): Remove this once flutter_driver supports null safety.
-// https://github.com/flutter/flutter/issues/71379
-// @dart = 2.9
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -21,7 +18,7 @@ Future<void> main() async {
   final bool adbExists =
       Process.runSync('which', <String>['adb']).exitCode == 0;
   if (!adbExists) {
-    print('This test needs ADB to exist on the \$PATH. Skipping...');
+    print(r'This test needs ADB to exist on the $PATH. Skipping...');
     exit(0);
   }
   print('Granting camera permissions...');
@@ -62,6 +59,6 @@ Future<void> main() async {
     'android.permission.RECORD_AUDIO'
   ]);
 
-  final Map<String, dynamic> result = jsonDecode(data);
+  final Map<String, dynamic> result = jsonDecode(data) as Map<String, dynamic>;
   exit(result['result'] == 'true' ? 0 : 1);
 }
